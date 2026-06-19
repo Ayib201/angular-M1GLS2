@@ -1,1 +1,68 @@
-<p>shell works!</p>
+<div class="shell-layout">
+
+  <!-- ── Sidebar ─────────────────────────────────────────── -->
+  <aside class="sidebar" [class.open]="sidebarOpen()">
+    <!-- <div class="sidebar-logo">
+      <span class="logo-text">UserMgmt</span>
+    </div> -->
+
+    <nav class="nav">
+      <span class="nav-section">Menu</span>
+
+      <a routerLink="/dashboard" routerLinkActive="active" class="nav-item">
+        <i class="ti ti-layout-dashboard"></i> Dashboard
+      </a>
+      <a routerLink="/profile" routerLinkActive="active" class="nav-item">
+        <i class="ti ti-user"></i> Mon profil
+      </a>
+
+      @if (auth.isAdmin()) {
+        <span class="nav-section">Administration</span>
+        <a routerLink="/users" routerLinkActive="active" class="nav-item">
+          <i class="ti ti-users"></i> Utilisateurs
+        </a>
+        <a routerLink="/admin" routerLinkActive="active" class="nav-item">
+          <i class="ti ti-settings"></i> Administration
+        </a>
+      }
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="user-row">
+        <div class="avatar">{{ initials() }}</div>
+        <div class="user-info">
+          <div class="user-name">
+            {{ auth.currentUser()?.firstName }} {{ auth.currentUser()?.lastName }}
+          </div>
+          <div class="user-role">{{ auth.currentUser()?.role }}</div>
+        </div>
+        <button class="icon-btn" (click)="logout()" title="Déconnexion">
+          <i class="ti ti-logout"></i>
+        </button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ── Zone principale ─────────────────────────────────── -->
+  <div class="main">
+
+    <!-- Navbar -->
+    <header class="navbar">
+      <button class="icon-btn mobile-toggle" (click)="sidebarOpen.set(!sidebarOpen())">
+        <i class="ti ti-menu-2"></i>
+      </button>
+      <span class="nav-title">{{ pageTitle() }}</span>
+      <div class="nav-actions">
+        <button class="icon-btn">
+          <i class="ti ti-bell"></i>
+        </button>
+      </div>
+    </header>
+
+    <!-- Contenu injecté par le router -->
+    <main class="content">
+      <router-outlet />
+    </main>
+
+  </div>
+</div>

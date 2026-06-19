@@ -12,6 +12,8 @@ export interface DashboardStats {
     total: number;
     active: number;
     admins: number;
+    newToday: number;
+    inactive: number;
 }
 export interface PagedResult<T> {
     items: T[];
