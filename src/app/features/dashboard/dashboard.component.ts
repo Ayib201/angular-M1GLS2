@@ -5,10 +5,31 @@ import { RouterLink } from '@angular/router';
 import { UserService } from '../../core/services/user.service';
 import { AuthService } from '../../core/services/auth.service';
 import { DashboardStats } from '../../shared/models/user';
+import {
+  LucideCircleCheck,
+  LucideCircleX,
+  LucideInfo,
+  LucideSettings,
+  LucideShield,
+  LucideUserPlus,
+  LucideUserRound,
+  LucideUsers,
+} from '@lucide/angular';
 
 @Component({
   selector: 'app-dashboard',
-  imports: [CommonModule, RouterLink],
+  imports: [
+    CommonModule,
+    RouterLink,
+    LucideCircleCheck,
+    LucideCircleX,
+    LucideInfo,
+    LucideSettings,
+    LucideShield,
+    LucideUserPlus,
+    LucideUserRound,
+    LucideUsers,
+  ],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.css',
 })

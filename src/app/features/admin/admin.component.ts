@@ -3,9 +3,25 @@ import { CommonModule } from '@angular/common';
 import { UserService } from '../../core/services/user.service';
 import { AuthService } from '../../core/services/auth.service';
 import { User, DashboardStats } from '../../shared/models/user';
+import {
+  LucideCircleCheck,
+  LucideDownload,
+  LucideRefreshCw,
+  LucideSettings,
+  LucideShield,
+  LucideUsers,
+} from '@lucide/angular';
 @Component({
   selector: 'app-admin',
-  imports: [CommonModule],
+  imports: [
+    CommonModule,
+    LucideCircleCheck,
+    LucideDownload,
+    LucideRefreshCw,
+    LucideSettings,
+    LucideShield,
+    LucideUsers,
+  ],
   templateUrl: './admin.component.html',
   styleUrl: './admin.component.css',
 })
@@ -21,7 +37,7 @@ export class AdminComponent implements OnInit {
     this.refreshStats();
     // Charge les 5 derniers utilisateurs
     this.userSvc
-      .getAll(1, 5)
+      .getAll({ page: 1, pageSize: 5 })
       .subscribe((res) => this.recentUsers.set(res.items));
   }
 
@@ -39,7 +55,7 @@ export class AdminComponent implements OnInit {
   }
 
   exportCsv() {
-    this.userSvc.getAll(1, 1000).subscribe((res) => {
+    this.userSvc.getAll({ page: 1, pageSize: 100 }).subscribe((res) => {
       const header = 'Prénom,Nom,Email,Rôle,Actif,Département,Créé le\n';
       const rows = res.items
         .map(
@@ -58,7 +74,7 @@ export class AdminComponent implements OnInit {
       a.download = 'utilisateurs.csv';
       a.click();
       URL.revokeObjectURL(url);
-      this.exportMsg.set('✅ Export CSV terminé !');
+      this.exportMsg.set('Export CSV terminé.');
       setTimeout(() => this.exportMsg.set(''), 3000);
     });
   }

@@ -1,7 +1,7 @@
 <div class="auth-page"> 
   <div class="auth-card"> 
     <div class="auth-header"> 
-      <div class="auth-logo">👤</div> 
+      <div class="auth-logo"><svg lucideLogIn aria-hidden="true"></svg></div>
       <h1>Connexion</h1> 
       <p>Bienvenue ! Connectez-vous à votre compte.</p> 
     </div> 
@@ -27,7 +27,11 @@ formControlName="password"
             placeholder="••••••••" [class.invalid]="isInvalid('password')" /> 
           <button type="button" class="pwd-toggle" 
 (click)="showPwd.set(!showPwd())"> 
-            {{ showPwd() ? '🙈' : '👁' }} 
+            @if (showPwd()) {
+              <svg lucideEyeOff aria-hidden="true"></svg>
+            } @else {
+              <svg lucideEye aria-hidden="true"></svg>
+            }
           </button> 
         </div> 
         @if (isInvalid('password')) { 

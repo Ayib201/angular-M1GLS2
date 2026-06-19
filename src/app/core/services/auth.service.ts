@@ -1,83 +1,101 @@
-import { Injectable, signal, computed } from '@angular/core';
+import { computed, Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { tap } from 'rxjs';
-import { AuthResponse, User } from '../../shared/models/user';
+import {
+  AuthenticatedUser,
+  AuthResponse,
+  LoginRequest,
+  RegisterRequest,
+  User,
+} from '../../shared/models/user';
 import { environment } from '../../environnements/environment';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-  private _currentUser = signal<User | null>(this.loadUser());
-  currentUser = this._currentUser.asReadonly();
-  isLoggedIn = computed(() => !!this._currentUser());
-  isAdmin = computed(() => this._currentUser()?.role === 'administrateur');
+  private readonly api = `${environment.apiUrl}/Auth`;
+  private readonly currentUserState = signal<AuthenticatedUser | null>(
+    this.loadUser(),
+  );
+
+  readonly currentUser = this.currentUserState.asReadonly();
+  readonly isLoggedIn = computed(
+    () => !!this.getToken() && !!this.currentUserState(),
+  );
+  readonly isAdmin = computed(
+    () => this.currentUserState()?.role === 'administrateur',
+  );
 
   constructor(
-    private http: HttpClient,
-    private router: Router,
+    private readonly http: HttpClient,
+    private readonly router: Router,
   ) {}
 
-  login(email: string, password: string) {
+  login(data: LoginRequest) {
     return this.http
-      .post<AuthResponse>(`${this.API}/login`, { email, password })
-      .pipe(tap((res) => this.storeSession(res)));
-  }
-  register({
-    firstName,
-    lastName,
-    email,
-    password,
-  }: {
-    firstName: string;
-    lastName: string;
-    email: string;
-    password: string;
-  }) {
-    return this.http
-      .post<AuthResponse>(`${this.API}/register`, {
-        firstName,
-        lastName,
-        email,
-        password,
-      })
-      .pipe(tap((res) => this.storeSession(res)));
+      .post<AuthResponse>(`${this.api}/login`, data)
+      .pipe(tap((response) => this.storeSession(response)));
   }
 
-  refresh() {
-    const rt = localStorage.getItem('refresh_token');
-    return this.http
-      .post<AuthResponse>(`${this.API}/refresh`, { refreshToken: rt })
-      .pipe(tap((res) => this.storeSession(res)));
+  register(data: RegisterRequest) {
+    return this.http.post<void>(`${this.api}/register`, data);
   }
 
-  logout() {
-    this.clearSession();
-    this.router.navigate(['/Auth/login']);
+  logout(redirect = true): void {
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('current_user');
+    this.currentUserState.set(null);
+
+    if (redirect) {
+      void this.router.navigate(['/auth/login']);
+    }
   }
 
-  getAccessToken(): string | null {
+  getToken(): string | null {
     return localStorage.getItem('access_token');
   }
-  updateLocalUser(user: User) {
-    localStorage.setItem('current_user', JSON.stringify(user));
-    this._currentUser.set(user);
+
+  // Compatibilité avec les consommateurs existants.
+  getAccessToken(): string | null {
+    return this.getToken();
   }
 
-  private storeSession(res: AuthResponse) {
-    localStorage.setItem('access_token', res.token);
-    localStorage.setItem('refresh_token', res.token);
-    localStorage.setItem('current_user', JSON.stringify(res.user));
-    this._currentUser.set(res.user);
+  getCurrentUser(): AuthenticatedUser | null {
+    return this.currentUserState();
   }
-  private clearSession() {
-    ['access_token', 'refresh_token', 'current_user'].forEach((k) =>
-      localStorage.removeItem(k),
-    );
-    this._currentUser.set(null);
+
+  updateLocalUser(user: User): void {
+    const currentUser: AuthenticatedUser = {
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      role: user.role,
+      isActive: user.isActive,
+      department: user.department,
+    };
+
+    localStorage.setItem('current_user', JSON.stringify(currentUser));
+    this.currentUserState.set(currentUser);
   }
-  private loadUser(): User | null {
+
+  private storeSession(response: AuthResponse): void {
+    localStorage.setItem('access_token', response.token);
+    localStorage.setItem('current_user', JSON.stringify(response.user));
+    this.currentUserState.set(response.user);
+  }
+
+  private loadUser(): AuthenticatedUser | null {
     const raw = localStorage.getItem('current_user');
-    return raw ? JSON.parse(raw) : null;
+
+    if (!raw) {
+      return null;
+    }
+
+    try {
+      return JSON.parse(raw) as AuthenticatedUser;
+    } catch {
+      localStorage.removeItem('current_user');
+      return null;
+    }
   }
-  private readonly API = `${environment.apiBaseUrl}/Auth`;
 }

@@ -1,23 +1,27 @@
 <div class="auth-page">
     <div class="auth-card">
         <div class="auth-header">
-            <div class="auth-logo">✨</div>
+            <div class="auth-logo"><svg lucideUserPlus aria-hidden="true"></svg></div>
             <h1>Créer un compte</h1>
         </div>
         <form [formGroup]="form" (ngSubmit)="onSubmit()" class="auth-form">
             @if (error()) { <div class="alert alert-error">{{ error() }}</div> }
 
             <div class="form-row">
-                <div class="form-group">
-                    <label>Prénom</label>
-                    <input formControlName="firstName" placeholder="Jean"
-                        [class.invalid]="isInvalid('firstName')" />
-                </div>
-                <div class="form-group">
-                    <label>Nom</label>
-                    <input formControlName="lastName" placeholder="Dupont"
-                        [class.invalid]="isInvalid('lastName')" />
-                </div>
+              <div class="form-group">
+                <label>Prénom</label>
+                <input type="text" formControlName="firstName"
+                       placeholder="Jean"
+                       [class.invalid]="isInvalid('firstName')" />
+              </div>
+
+              <div class="form-group">
+                <label>Nom</label>
+                <input type="text" formControlName="lastName"
+                       placeholder="Dupont"
+                       [class.invalid]="isInvalid('lastName')" />
+              </div>
+
             </div>
 
             <div class="form-group">
@@ -25,6 +29,16 @@
                 <input type="email" formControlName="email"
                     placeholder="vous@exemple.com"
                     [class.invalid]="isInvalid('email')" />
+            </div>
+
+            <div class="form-group">
+                <label>Département</label>
+                <input type="text" formControlName="department"
+                    placeholder="Informatique"
+                    [class.invalid]="isInvalid('department')" />
+                @if (isInvalid('department')) {
+                <span class="field-error">Le département est requis</span>
+                }
             </div>
 
             <div class="form-group">
@@ -41,7 +55,7 @@
                 <label>Confirmer le mot de passe</label>
                 <input type="password" formControlName="confirmPassword"
                     placeholder="••••••••"
-                    [class.invalid]="form.hasError('mismatch') && 
+                    [class.invalid]="form.hasError('mismatch') &&
                             form.get('confirmPassword')?.touched" />
                 @if (form.hasError('mismatch') &&
                 form.get('confirmPassword')?.touched)

@@ -1,0 +1,75 @@
+:host {
+  display: block;
+}
+
+.forms-col {
+  min-width: 0;
+}
+
+.card form {
+  display: flex;
+  flex-direction: column;
+}
+
+.card .form-group {
+  min-width: 0;
+  margin-bottom: 18px;
+}
+
+.card .form-group label {
+  margin-bottom: 2px;
+  color: #30343b;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.card input {
+  min-height: 42px;
+  padding: 10px 12px;
+  border: 1px solid #cfd5df;
+  border-radius: 8px;
+  background: #fbfcfe;
+  color: #20242b;
+  outline: none;
+  transition:
+    border-color 150ms ease,
+    box-shadow 150ms ease,
+    background-color 150ms ease;
+}
+
+.card input::placeholder {
+  color: #9299a5;
+}
+
+.card input:hover {
+  border-color: #aeb7c5;
+  background: #fff;
+}
+
+.card input:focus {
+  border-color: #1a73e8;
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.13);
+}
+
+.card input.ng-invalid.ng-touched {
+  border-color: #d93025;
+  box-shadow: 0 0 0 3px rgba(217, 48, 37, 0.1);
+}
+
+.card form > .btn {
+  align-self: flex-start;
+  min-width: 152px;
+  margin-top: 2px;
+}
+
+@media (max-width: 600px) {
+  .card .form-row {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  .card form > .btn {
+    width: 100%;
+  }
+}

@@ -6,7 +6,11 @@
     </button>
   </div>
 
-  <!-- ── Filtres ─────────────────────────────────────────── -->
+  @if (pageError()) {
+    <div class="alert alert-error">{{ pageError() }}</div>
+  }
+
+
   <div class="filters">
     <input
       type="text"
@@ -17,8 +21,9 @@
     />
     <select (change)="onRoleFilter($event)">
       <option value="">Tous les rôles</option>
-      <option value="utilisateur">User</option>
-      <option value="administrateur">Admin</option>
+      <option value="administrateur">Administrateur</option>
+      <option value="utilisateur">Utilisateur</option>
+      <option value="moderateur">Modérateur</option>
     </select>
     <select (change)="onActiveFilter($event)">
       <option value="">Tous les statuts</option>
@@ -27,7 +32,7 @@
     </select>
   </div>
 
-  <!-- ── Table ──────────────────────────────────────────── -->
+
   @if (loading()) {
     <div class="loading">Chargement...</div>
   } @else {
@@ -56,10 +61,10 @@
               <td>{{ user.email }}</td>
               <td>
                 <span class="badge" [class.admin]="user.role === 'administrateur'">
-                  {{ user.role }}
+                  {{ roleLabel(user.role) }}
                 </span>
               </td>
-              <td>{{ user.department ?? '—' }}</td>
+              <td>{{ user.department || '—' }}</td>
               <td>
                 <span class="status" [class.active]="user.isActive">
                   {{ user.isActive ? 'Actif' : 'Inactif' }}
@@ -69,13 +74,22 @@
               <td>
                 <div class="actions">
                   <button class="btn-icon" title="Éditer"
-                    (click)="openModal('edit', user)">✏️</button>
-                  <button class="btn-icon" title="Toggle actif"
+                    (click)="openModal('edit', user)">
+                    <svg lucidePencil aria-hidden="true"></svg>
+                  </button>
+                  <button class="btn-icon"
+                    [title]="user.isActive ? 'Désactiver' : 'Activer'"
                     (click)="toggleActive(user)">
-                    {{ user.isActive ? '🔒' : '🔓' }}
+                    @if (user.isActive) {
+                      <svg lucideLock aria-hidden="true"></svg>
+                    } @else {
+                      <svg lucideLockOpen aria-hidden="true"></svg>
+                    }
                   </button>
                   <button class="btn-icon danger" title="Supprimer"
-                    (click)="deleteTarget.set(user)">🗑️</button>
+                    (click)="deleteTarget.set(user)">
+                    <svg lucideTrash2 aria-hidden="true"></svg>
+                  </button>
                 </div>
               </td>
             </tr>
@@ -88,29 +102,30 @@
       </table>
     </div>
 
-    <!-- ── Pagination ──────────────────────────────────── -->
+
     <div class="pagination">
       <span class="pagination-info">
-        {{ totalCount() }} utilisateur(s) — page {{ page() }}
+        {{ totalItems() }} utilisateur(s), page {{ page() }} sur {{ totalPages() }}
       </span>
       <div class="pagination-controls">
         <button [disabled]="page() === 1" (click)="goPage(page() - 1)">‹</button>
         @for (p of pageNumbers(); track p) {
           <button [class.current]="p === page()" (click)="goPage(p)">{{ p }}</button>
         }
-        <button [disabled]="page() * pageSize >= totalCount()" (click)="goPage(page() + 1)">›</button>
+        <button [disabled]="page() >= totalPages()" (click)="goPage(page() + 1)">›</button>
       </div>
     </div>
   }
 </div>
 
-<!-- ── Modal Créer / Éditer ────────────────────────────── -->
+
 @if (modalMode()) {
-  <div class="modal-backdrop" (click)="modalMode.set(null)">
+  <div class="modal-backdrop" (click)="closeModal()">
     <div class="modal" (click)="$event.stopPropagation()">
       <div class="modal-header">
         <h2>{{ modalMode() === 'create' ? 'Nouvel utilisateur' : 'Modifier' }}</h2>
-        <button class="btn-icon" (click)="modalMode.set(null)">✕</button>
+        <button class="btn-icon" type="button" aria-label="Fermer"
+          (click)="closeModal()">✕</button>
       </div>
 
       @if (formError()) {
@@ -132,8 +147,7 @@
         <div class="form-group">
           <label>Email *</label>
           <input type="email" formControlName="email"
-            placeholder="jean@exemple.com"
-            [attr.disabled]="modalMode() === 'edit' ? true : null" />
+            placeholder="jean@exemple.com" />
         </div>
 
         @if (modalMode() === 'create') {
@@ -148,13 +162,17 @@
           <div class="form-group">
             <label>Rôle</label>
             <select formControlName="role">
-              <option value="User">User</option>
-              <option value="Admin">Admin</option>
+              @for (role of roles; track role) {
+                <option [value]="role">{{ roleLabel(role) }}</option>
+              }
             </select>
           </div>
           <div class="form-group">
-            <label>Téléphone</label>
-            <input formControlName="phone" placeholder="+221 77 000 00 00" />
+            <label>Statut</label>
+            <select formControlName="isActive">
+              <option [ngValue]="true">Actif</option>
+              <option [ngValue]="false">Inactif</option>
+            </select>
           </div>
         </div>
 
@@ -165,7 +183,7 @@
 
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary"
-            (click)="modalMode.set(null)">Annuler</button>
+            (click)="closeModal()">Annuler</button>
           <button type="submit" class="btn btn-primary" [disabled]="saving()">
             {{ saving() ? 'Enregistrement…' : 'Enregistrer' }}
           </button>
@@ -175,7 +193,6 @@
   </div>
 }
 
-<!-- ── Modal Confirmation Suppression ─────────────────── -->
 @if (deleteTarget()) {
   <div class="modal-backdrop" (click)="deleteTarget.set(null)">
     <div class="modal modal-sm" (click)="$event.stopPropagation()">
@@ -188,7 +205,9 @@
       </p>
       <div class="modal-footer">
         <button class="btn btn-secondary" (click)="deleteTarget.set(null)">Annuler</button>
-        <button class="btn btn-danger" (click)="deleteUser()">Supprimer</button>
+        <button class="btn btn-danger" [disabled]="deleting()" (click)="deleteUser()">
+          {{ deleting() ? 'Suppression…' : 'Supprimer' }}
+        </button>
       </div>
     </div>
   </div>

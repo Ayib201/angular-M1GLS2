@@ -1,6 +1,6 @@
 <div class="page">
     <div class="page-header">
-        <h1>Bonjour, {{ auth.currentUser()?.firstName }} 👋</h1>
+        <h1>Bonjour, {{ auth.currentUser()?.firstName }}</h1>
         <p class="subtitle">Voici l'état de votre application</p>
     </div>
 
@@ -9,27 +9,27 @@
     @if (stats()) {
     <div class="stats-grid">
         <div class="stat-card stat-blue">
-            <div class="stat-icon">👥</div>
+            <div class="stat-icon"><svg lucideUsers aria-hidden="true"></svg></div>
             <div class="stat-value">{{ stats()!.total }}</div>
             <div class="stat-label">Utilisateurs total</div>
         </div>
         <div class="stat-card stat-green">
-            <div class="stat-icon">✅</div>
+            <div class="stat-icon"><svg lucideCircleCheck aria-hidden="true"></svg></div>
             <div class="stat-value">{{ stats()!.active }}</div>
             <div class="stat-label">Actifs</div>
         </div>
         <div class="stat-card stat-red">
-            <div class="stat-icon">🚫</div>
+            <div class="stat-icon"><svg lucideCircleX aria-hidden="true"></svg></div>
             <div class="stat-value">{{ stats()!.inactive }}</div>
             <div class="stat-label">Inactifs</div>
         </div>
         <div class="stat-card stat-purple">
-            <div class="stat-icon">🛡</div>
+            <div class="stat-icon"><svg lucideShield aria-hidden="true"></svg></div>
             <div class="stat-value">{{ stats()!.admins }}</div>
             <div class="stat-label">Admins</div>
         </div>
         <div class="stat-card stat-amber">
-            <div class="stat-icon">🆕</div>
+            <div class="stat-icon"><svg lucideUserPlus aria-hidden="true"></svg></div>
             <div class="stat-value">{{ stats()!.newToday }}</div>
             <div class="stat-label">Nouveaux aujourd'hui</div>
         </div>
@@ -49,7 +49,7 @@
         <h2>Actions rapides</h2>
         <div class="actions-grid">
             <a routerLink="/profile" class="action-card">
-                <span class="action-icon">🙍</span>
+                <span class="action-icon"><svg lucideUserRound aria-hidden="true"></svg></span>
                 <div>
                     <div class="action-title">Mon profil</div>
                     <div class="action-desc">Modifier mes informations</div>
@@ -57,14 +57,14 @@
             </a>
             @if (auth.isAdmin()) {
             <a routerLink="/users" class="action-card">
-                <span class="action-icon">👥</span>
+                <span class="action-icon"><svg lucideUsers aria-hidden="true"></svg></span>
                 <div>
                     <div class="action-title">Gérer les utilisateurs</div>
                     <div class="action-desc">Créer, modifier, supprimer</div>
                 </div>
             </a>
             <a routerLink="/admin" class="action-card">
-                <span class="action-icon">⚙</span>
+                <span class="action-icon"><svg lucideSettings aria-hidden="true"></svg></span>
                 <div>
                     <div class="action-title">Administration</div>
                     <div class="action-desc">Paramètres système</div>
@@ -77,7 +77,7 @@
     <!-- Message info pour utilisateur standard ──────────────────────── -->
     @if (!auth.isAdmin()) {
     <div class="info-card">
-        <span>ℹ</span>
+        <span><svg lucideInfo aria-hidden="true"></svg></span>
         <div>
             <strong>Compte utilisateur standard</strong>
             <p>Contactez un administrateur pour des droits supplémentaires.</p>

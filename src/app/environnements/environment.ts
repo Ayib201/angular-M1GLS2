@@ -1,9 +1,5 @@
-// Configuration de l'application
 export const environment = {
-  // URL de base de l'API
-  // Modifiez cette valeur selon votre environnement (dev, staging, prod)
-  apiBaseUrl: 'https://localhost:7085/api',
-  // Configuration d'autres paramètres
+  apiUrl: ' http://localhost:5263/api',
   production: false,
   debug: true,
 };

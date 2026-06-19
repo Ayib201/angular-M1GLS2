@@ -1,13 +1,26 @@
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-
 import { BaseService } from './base.service';
 
+class TestService extends BaseService<object, object, object> {
+  constructor() {
+    super('/test');
+  }
+}
+
 describe('BaseService', () => {
-  let service: BaseService<any, any, any>;
+  let service: TestService;
 
   beforeEach(() => {
-    TestBed.configureTestingModule({});
-    service = TestBed.inject(BaseService);
+    TestBed.configureTestingModule({
+      providers: [
+        TestService,
+        provideHttpClient(),
+        provideHttpClientTesting(),
+      ],
+    });
+    service = TestBed.inject(TestService);
   });
 
   it('should be created', () => {

@@ -8,6 +8,7 @@ import {
 import { RouterLink, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../../core/services/auth.service';
+import { LucideUserPlus } from '@lucide/angular';
 
 // Validator personnalisé : vérifie que password === confirmPassword
 function passwordMatch(control: AbstractControl) {
@@ -17,7 +18,7 @@ function passwordMatch(control: AbstractControl) {
 }
 @Component({
   selector: 'app-register',
-  imports: [ReactiveFormsModule, RouterLink, CommonModule],
+  imports: [ReactiveFormsModule, RouterLink, CommonModule, LucideUserPlus],
   templateUrl: './register.component.html',
   styleUrl: './register.component.css',
 })
@@ -34,6 +35,7 @@ export class RegisterComponent {
       firstName: ['', Validators.required],
       lastName: ['', Validators.required],
       email: ['', [Validators.required, Validators.email]],
+      department: ['', Validators.required],
       password: ['', [Validators.required, Validators.minLength(8)]],
       confirmPassword: ['', Validators.required],
     },
@@ -51,16 +53,21 @@ export class RegisterComponent {
       return;
     }
     this.loading.set(true);
-    const { firstName, lastName, email, password } = this.form.value;
+    const { firstName, lastName, email, department, password } =
+      this.form.getRawValue();
     this.auth
       .register({
         firstName: firstName!,
         lastName: lastName!,
         email: email!,
+        department: department!,
         password: password!,
       })
       .subscribe({
-        next: () => this.router.navigate(['/dashboard']),
+        next: () =>
+          this.router.navigate(['/auth/login'], {
+            state: { registered: true },
+          }),
         error: (e) => {
           this.error.set(e.error?.message ?? "Erreur lors de l'inscription");
           this.loading.set(false);

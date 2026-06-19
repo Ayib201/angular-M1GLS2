@@ -1,40 +1,28 @@
-// src/app/core/interceptors/auth.interceptor.ts
-import { HttpInterceptorFn, HttpErrorResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
-import { catchError, switchMap, throwError } from 'rxjs';
+import { catchError, throwError } from 'rxjs';
 import { AuthService } from './auth.service';
 
-export const authInterceptor: HttpInterceptorFn = (req, next) => {
+export const authInterceptor: HttpInterceptorFn = (request, next) => {
   const auth = inject(AuthService);
-  const token = auth.getAccessToken();
+  const token = auth.getToken();
+  const authenticatedRequest = token
+    ? request.clone({
+        setHeaders: { Authorization: `Bearer ${token}` },
+      })
+    : request;
 
-  // Injecte le Bearer token sur toutes les requêtes
-  const authReq = token
-    ? req.clone({ setHeaders: { Authorization: `Bearer ${token}` } })
-    : req;
+  return next(authenticatedRequest).pipe(
+    catchError((error: HttpErrorResponse) => {
+      const isAuthRequest =
+        request.url.endsWith('/Auth/login') ||
+        request.url.endsWith('/Auth/register');
 
-  return next(authReq).pipe(
-    catchError((err: HttpErrorResponse) => {
-      // Si 401, tente un refresh automatique
-      if (err.status === 401 && !req.url.includes('/auth/')) {
-        return auth.refresh().pipe(
-          switchMap(() => {
-            const newToken = auth.getAccessToken();
-            const retried = req.clone({
-              setHeaders: {
-                Authorization: `Bearer 
-${newToken}`,
-              },
-            });
-            return next(retried);
-          }),
-          catchError(() => {
-            auth.logout(); // Refresh expiré → déconnexion
-            return throwError(() => err);
-          }),
-        );
+      if (error.status === 401 && token && !isAuthRequest) {
+        auth.logout();
       }
-      return throwError(() => err);
+
+      return throwError(() => error);
     }),
   );
 };
