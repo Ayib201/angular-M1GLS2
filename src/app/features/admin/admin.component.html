@@ -1,0 +1,84 @@
+<div class="page">
+    <div class="page-header">
+        <h1>⚙ Administration</h1>
+        <p class="subtitle">Vue d'ensemble et gestion système</p>
+    </div>
+
+    <!-- Stats avec barres de progression ────────────────────────────── -->
+    @if (stats()) {
+    <div class="section">
+        <h2>Statistiques système</h2>
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon blue">👥</div>
+                <div class="stat-body">
+                    <div class="stat-val">{{ stats()!.total }}</div>
+                    <div class="stat-lbl">Utilisateurs total</div>
+                </div>
+                <div class="stat-bar">
+                    <div class="stat-bar-fill blue" style="width:100%"></div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon green">✅</div>
+                <div class="stat-body">
+                    <div class="stat-val">{{ stats()!.active }}</div>
+                    <div class="stat-lbl">Actifs ({{ activePct() }}%)</div>
+                </div>
+                <div class="stat-bar">
+                    <div class="stat-bar-fill green"
+                        [style.width]="activePct() + 
+'%'"></div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon purple">🛡</div>
+                <div class="stat-body">
+                    <div class="stat-val">{{ stats()!.admins }}</div>
+                    <div class="stat-lbl">Admins ({{ adminPct() }}%)</div>
+                </div>
+                <div class="stat-bar">
+                    <div class="stat-bar-fill purple"
+                        [style.width]="adminPct() + 
+'%'"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    }
+
+    <!-- Derniers utilisateurs ───────────────────────────────────────── -->
+    <div class="section">
+        <h2>Derniers utilisateurs enregistrés</h2>
+        <div class="user-list">
+            @for (user of recentUsers(); track user.id) {
+            <div class="user-row">
+                <div class="avatar">{{ initials(user) }}</div>
+                <div class="user-info">
+                    <span class="user-name">{{ user.firstName }} {{
+                        user.lastName
+                        }}</span>
+                    <span class="user-email">{{ user.email }}</span>
+                </div>
+                <span class="badge" [class.admin]="user.role === 'administrateur'">{{
+                    user.role
+                    }}</span>
+                <span class="date">{{ user.createdAt | date:'dd/MM/yy HH:mm'
+                    }}</span>
+            </div>
+            }
+        </div>
+    </div>
+
+    <!-- Actions admin ───────────────────────────────────────────────── -->
+    <div class="section">
+        <h2>Actions administrateur</h2>
+        <div class="admin-actions">
+            <button class="action-btn blue" (click)="refreshStats()">🔄
+                Actualiser</button>
+            <button class="action-btn green" (click)="exportCsv()">📥 Exporter
+                CSV</button>
+        </div>
+        @if (exportMsg()) { <p class="export-msg">{{ exportMsg() }}</p> }
+    </div>
+</div>

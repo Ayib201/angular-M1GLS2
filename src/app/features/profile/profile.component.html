@@ -1,0 +1,110 @@
+<div class="page">
+    <div class="page-header">
+        <h1>Mon profil</h1>
+        <p class="subtitle">Gérez vos informations personnelles</p>
+    </div>
+    <div class="profile-layout">
+
+        <!-- Carte avatar ───────────────────────────────────────────────── -->
+        <div class="avatar-card">
+            <div class="avatar-big">{{ initials() }}</div>
+            <div class="avatar-name">{{ auth.currentUser()?.firstName }} {{
+                auth.currentUser()?.lastName }}</div>
+            <div class="avatar-email">{{ auth.currentUser()?.email }}</div>
+            <span class="role-badge" [class.admin]="auth.isAdmin()">
+                {{ auth.currentUser()?.role }}
+            </span>
+            <div class="avatar-meta">
+                <div class="meta-item">
+                    <span class="meta-label">Membre depuis</span>
+                    <span>{{ auth.currentUser()?.createdAt | date:'MMMM yyyy'
+                        }}</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="forms-col">
+            <!-- Formulaire informations ──────────────────────────────────── -->
+            <div class="card">
+                <h2>Informations personnelles</h2>
+                @if (infoSuccess()) { <div class="alert alert-success">✅ Profil
+                    mis à
+                    jour</div> }
+                @if (infoError()) { <div class="alert alert-error">{{
+                    infoError()
+                    }}</div> }
+                <form [formGroup]="infoForm" (ngSubmit)="saveInfo()">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Prénom *</label>
+                            <input formControlName="firstName"
+                                placeholder="Jean" />
+                        </div>
+                        <div class="form-group">
+                            <label>Nom *</label>
+                            <input formControlName="lastName"
+                                placeholder="Dupont" />
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Email (non modifiable)</label>
+                        <input [value]="auth.currentUser()?.email" disabled />
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Téléphone</label>
+                            <input formControlName="phone"
+                                placeholder="+33 6 00 00 00 00" />
+                        </div>
+                        <div class="form-group">
+                            <label>Département</label>
+                            <input formControlName="department"
+                                placeholder="RH, 
+Informatique…" />
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary"
+                        [disabled]="savingInfo()">
+                        @if (savingInfo()) { Sauvegarde… } @else { Sauvegarder }
+                    </button>
+                </form>
+            </div>
+
+            <!-- Formulaire mot de passe ──────────────────────────────────── -->
+            <div class="card">
+                <h2>Changer le mot de passe</h2>
+                @if (pwdSuccess()) { <div class="alert alert-success">✅ Mot de
+                    passe
+                    modifié</div> }
+                @if (pwdError()) { <div class="alert alert-error">{{ pwdError()
+                    }}</div> }
+                <form [formGroup]="pwdForm" (ngSubmit)="savePassword()">
+                    <div class="form-group">
+                        <label>Mot de passe actuel *</label>
+                        <input type="password"
+                            formControlName="currentPassword" />
+                    </div>
+                    <div class="form-group">
+                        <label>Nouveau mot de passe *</label>
+                        <input type="password" formControlName="newPassword"
+                            placeholder="Min. 8 caractères" />
+                    </div>
+                    <div class="form-group">
+                        <label>Confirmer *</label>
+                        <input type="password"
+                            formControlName="confirmPassword" />
+                        @if (pwdForm.hasError('mismatch') &&
+                        pwdForm.get('confirmPassword')?.touched) {
+                        <span class="field-error">Mots de passe
+                            différents</span>
+                        }
+                    </div>
+                    <button type="submit" class="btn btn-primary"
+                        [disabled]="savingPwd()">
+                        Changer le mot de passe
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

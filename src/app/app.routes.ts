@@ -1,18 +1,53 @@
 import { Routes } from '@angular/router';
-import { ProduitComponent } from './components/produit/produit.component';
+import { authGuard, guestGuard, adminGuard } from './core/guards/auth.guard';
 
 export const routes: Routes = [
-    {
-        path: 'produits',
-        component: ProduitComponent
-    },
-    {
-        path: '',
-        redirectTo: 'produits',
-        pathMatch: 'full'
-    },
-    {
-        path: '**',
-        redirectTo: 'produits'
-    }
+  { path: '', redirectTo: '/dashboard', pathMatch: 'full' },
+  {
+    path: 'auth',
+    canActivate: [guestGuard], // Redirige vers /dashboard si déjà connecté
+    loadChildren: () =>
+      import('./features/auth/auth.routes').then((m) => m.AUTH_ROUTES),
+  },
+  {
+    path: '',
+    canActivate: [authGuard], // Redirige vers /login si non connecté
+    loadComponent: () =>
+      import('./shared/components/shell/shell.component').then(
+        (m) => m.ShellComponent,
+      ),
+    children: [
+      {
+        path: 'dashboard',
+        loadComponent: () =>
+          import('./features/dashboard/dashboard.component').then(
+            (m) => m.DashboardComponent,
+          ),
+      },
+      {
+        path: 'profile',
+        loadComponent: () =>
+          import('./features/profile/profile.component').then(
+            (m) => m.ProfileComponent,
+          ),
+      },
+      {
+        path: 'users',
+        canActivate: [adminGuard],
+        loadComponent: () =>
+          import('./features/users/users.component').then(
+            (m) => m.UsersComponent,
+          ),
+      },
+      {
+        path: 'admin',
+        canActivate: [adminGuard],
+        loadComponent: () =>
+          import('./features/admin/admin.component').then(
+            (m) => m.AdminComponent,
+          ),
+      },
+    ],
+  },
+  { path: '**', redirectTo: '/dashboard' },
 ];
