@@ -802,6 +802,18 @@ input.invalid {
   gap: 4px;
 }
 
+.auth-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.auth-actions .btn {
+  justify-content: center;
+  text-decoration: none;
+}
+
 .auth-footer {
   text-align: center;
   margin-top: 20px;

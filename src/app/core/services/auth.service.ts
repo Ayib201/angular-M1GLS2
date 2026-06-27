@@ -1,19 +1,37 @@
 import { computed, Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { tap } from 'rxjs';
+import { Observable, map, tap } from 'rxjs';
 import {
   AuthenticatedUser,
-  AuthResponse,
-  LoginRequest,
   RegisterRequest,
   User,
 } from '../../shared/models/user';
 import { environment } from '../../environnements/environment';
 
+interface KeycloakTokenResponse {
+  access_token: string;
+  id_token?: string;
+  refresh_token?: string;
+  expires_in?: number;
+  token_type?: string;
+}
+
+interface KeycloakTokenPayload {
+  email?: string;
+  family_name?: string;
+  given_name?: string;
+  name?: string;
+  preferred_username?: string;
+  realm_access?: {
+    roles?: string[];
+  };
+  resource_access?: Record<string, { roles?: string[] }>;
+}
+
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-  private readonly api = `${environment.apiUrl}/Auth`;
+  private readonly keycloak = environment.keycloak;
   private readonly currentUserState = signal<AuthenticatedUser | null>(
     this.loadUser(),
   );
@@ -31,23 +49,47 @@ export class AuthService {
     private readonly router: Router,
   ) {}
 
-  login(data: LoginRequest) {
+  login(): void {
+    window.location.assign(this.buildAuthorizationUrl());
+  }
+
+  completeLoginRedirect(code: string): Observable<void> {
+    const body = new URLSearchParams();
+    body.set('client_id', this.keycloak.clientId);
+    body.set('grant_type', 'authorization_code');
+    body.set('code', code);
+    body.set('redirect_uri', this.redirectUri);
+
     return this.http
-      .post<AuthResponse>(`${this.api}/login`, data)
-      .pipe(tap((response) => this.storeSession(response)));
+      .post<KeycloakTokenResponse>(
+        `${this.keycloak.url}/realms/${this.keycloak.realm}/protocol/openid-connect/token`,
+        body.toString(),
+        {
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            Accept: 'application/json',
+          },
+        },
+      )
+      .pipe(
+        tap((response) => this.storeKeycloakSession(response)),
+        map(() => undefined),
+      );
   }
 
   register(data: RegisterRequest) {
-    return this.http.post<void>(`${this.api}/register`, data);
+    return this.http.post<void>(
+      `${this.keycloak.url}/realms/${this.keycloak.realm}/protocol/openid-connect/register`,
+      data,
+    );
   }
 
   logout(redirect = true): void {
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('current_user');
-    this.currentUserState.set(null);
+    const idToken = localStorage.getItem('id_token');
+    this.clearLocalSession();
 
     if (redirect) {
-      void this.router.navigate(['/auth/login']);
+      window.location.assign(this.buildLogoutUrl(idToken));
     }
   }
 
@@ -55,7 +97,6 @@ export class AuthService {
     return localStorage.getItem('access_token');
   }
 
-  // Compatibilité avec les consommateurs existants.
   getAccessToken(): string | null {
     return this.getToken();
   }
@@ -78,10 +119,92 @@ export class AuthService {
     this.currentUserState.set(currentUser);
   }
 
-  private storeSession(response: AuthResponse): void {
-    localStorage.setItem('access_token', response.token);
-    localStorage.setItem('current_user', JSON.stringify(response.user));
-    this.currentUserState.set(response.user);
+  private get redirectUri(): string {
+    return `${window.location.origin}/auth/callback`;
+  }
+
+  private buildAuthorizationUrl(): string {
+    const params = new URLSearchParams();
+    params.set('client_id', this.keycloak.clientId);
+    params.set('redirect_uri', this.redirectUri);
+    params.set('response_type', 'code');
+    params.set('scope', 'openid profile email');
+
+    return `${this.keycloak.url}/realms/${this.keycloak.realm}/protocol/openid-connect/auth?${params.toString()}`;
+  }
+
+  private storeKeycloakSession(response: KeycloakTokenResponse): void {
+    const payload = this.decodeToken(response.access_token);
+    const username = payload.preferred_username ?? payload.email ?? '';
+    const user: AuthenticatedUser = {
+      email: payload.email ?? username,
+      firstName: payload.given_name ?? payload.name ?? username,
+      lastName: payload.family_name ?? '',
+      role: this.resolveRole(payload),
+      isActive: true,
+      department: '',
+    };
+
+    localStorage.setItem('access_token', response.access_token);
+    if (response.id_token) {
+      localStorage.setItem('id_token', response.id_token);
+    }
+    localStorage.setItem('current_user', JSON.stringify(user));
+    this.currentUserState.set(user);
+  }
+
+  private clearLocalSession(): void {
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('id_token');
+    localStorage.removeItem('current_user');
+    this.currentUserState.set(null);
+  }
+
+  private buildLogoutUrl(idToken: string | null): string {
+    const params = new URLSearchParams();
+    params.set('client_id', this.keycloak.clientId);
+    params.set('post_logout_redirect_uri', `${window.location.origin}/auth/login`);
+
+    if (idToken) {
+      params.set('id_token_hint', idToken);
+    }
+
+    return `${this.keycloak.url}/realms/${this.keycloak.realm}/protocol/openid-connect/logout?${params.toString()}`;
+  }
+
+  private decodeToken(token: string): KeycloakTokenPayload {
+    try {
+      const [, payload] = token.split('.');
+      const normalizedPayload = payload.replace(/-/g, '+').replace(/_/g, '/');
+      const paddedPayload = normalizedPayload.padEnd(
+        Math.ceil(normalizedPayload.length / 4) * 4,
+        '=',
+      );
+      return JSON.parse(atob(paddedPayload)) as KeycloakTokenPayload;
+    } catch {
+      return {};
+    }
+  }
+
+  private resolveRole(payload: KeycloakTokenPayload): AuthenticatedUser['role'] {
+    const roles = [
+      ...(payload.realm_access?.roles ?? []),
+      ...(payload.resource_access?.[this.keycloak.clientId]?.roles ?? []),
+    ];
+
+    if (roles.includes('administrateur') || roles.includes('admin')) {
+      return 'administrateur';
+    }
+
+    if (roles.includes('moderateur')) {
+      return 'moderateur';
+    }
+
+    if (roles.includes('utilisateur') || roles.length > 0) {
+      return 'utilisateur';
+    }
+
+    return null;
   }
 
   private loadUser(): AuthenticatedUser | null {

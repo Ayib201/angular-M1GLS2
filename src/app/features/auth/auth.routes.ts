@@ -7,6 +7,11 @@ export const AUTH_ROUTES: Routes = [
       import('./login/login.component').then((m) => m.LoginComponent),
   },
   {
+    path: 'callback',
+    loadComponent: () =>
+      import('./callback/callback.component').then((m) => m.CallbackComponent),
+  },
+  {
     path: 'register',
     loadComponent: () =>
       import('./register/register.component').then((m) => m.RegisterComponent),
